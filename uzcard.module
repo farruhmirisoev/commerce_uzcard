@@ -1,0 +1,179 @@
+<?php
+
+/**
+ *  Define callback page and admin page
+ */
+
+function uzcard_menu(){
+   $items = array();
+   $items['payments/paycom'] = array(
+       'title' => t('Uzcard'),
+       'page callback' => '_uzcard_pay',
+       'access arguments' => array('access content'),
+       'type' => MENU_LOCAL_TASK,
+       'file' => 'uzcard.paycom.inc'
+   );
+
+   $items['admin/config/system/uzcard'] = array(
+    'title' => 'UzCard settings',
+    'description' => 'UzCard settings',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('uzcard_admin'),
+    'access arguments' => array('access administration pages'),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'uzcard.admin.inc'
+   );   
+
+   return $items;
+}
+
+/**
+ * Implements hook_commerce_order_status_info().
+ * Add custom order status
+ */
+function uzcard_commerce_order_status_info(){
+    
+    $order_statuses['blocked'] = array(
+    'name' => 'blocked',
+    'title' => t('Заблокирован и ожидает завершения или отмены транзакции со стороны Paycom'),
+    'state' => 'checkout',
+    'weight' => 21      
+    );
+
+    $order_statuses['cash'] = array(
+    'name' => 'cash',
+    'title' => t('Оплата наличными'),
+    'state' => 'pending',
+    );
+
+    return $order_statuses;
+}
+
+/**
+ * Implements hook_commerce_payment_method_info().
+ */
+
+function uzcard_commerce_payment_method_info() {
+  return array(
+    // Системное название способа оплаты.
+    'uzcard' => array(
+      // Название способа оплаты для отображения в админке.
+      'title' => t('UzCard'),
+      // Название способа оплаты для отображения в форме чекаута. Может содержать html.
+      // Опционально.
+      'display_title' => t('UzCard'),
+      // Описание способа оплаты. Опционально.
+      'description' => t('UzCard'),
+      // Состояние способа оплаты при включении модуля: TRUE — включён, FALSE — выключен
+      // (по умолчанию). Опционально.
+      'active' => TRUE,
+      // Сможет ли администратор самостоятельно добавить этот способ оплаты для
+      // завершённого заказа. Опционально. По умолчанию TRUE.
+      'terminal' => TRUE,
+      // Нужно ли покупателю покидать пределы сайта при оплате заказа этим способом.
+      // Опционально. По умолчанию FALSE.
+      'offsite' => TRUE,
+      // Автоматический редирект на сторонний сайт при оплате заказа этим способом.
+      // Опционально. По умолчанию FALSE.
+      'offsite_autoredirect' => FALSE,
+    ),
+  );
+}
+
+/**
+ * Payment method callback: submit form.
+ */
+function uzcard_submit_form($payment_method, $pane_values, $checkout_pane, $order) {
+  $form = array();
+  $pane_values += array('name' => '');
+ 
+  // Выводим информацию о способе оплаты
+  if (!empty($payment_method['settings']['information'])) {
+    $form['uzcard_information'] = array(
+      '#markup' => $payment_method['settings']['information']
+    );
+  }
+
+ 
+  return $form;
+}
+
+/**
+ * Payment method callback: submit form validation.
+ */
+function uzcard_submit_form_validate($payment_method, $pane_form, $pane_values, $order, $form_parents = array()) {
+
+}
+
+/**
+ * Payment method callback: payment redirect form.
+ */
+
+/**
+ * Payment method callback: submit form submission.
+ */
+function uzcard_submit_form_submit($payment_method, $pane_form, $pane_values, $order, $charge) {
+  $order->data['uzcard'] = $pane_values;}
+
+function uzcard_redirect_form($form, &$form_state, $order, $payment_method) {
+  $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
+ 
+  // Адрес платёжного шлюза
+  $form['#action'] = variable_get('checkout_url','');
+ 
+  // merchant id 
+  $form['merchant'] = array(
+    '#type' => 'hidden',
+    '#value' => variable_get('merchant_id',''),
+  );
+  // сумма заказа  
+  $form['amount'] = array(
+    '#type' => 'hidden',
+    '#value' => $order_wrapper->commerce_order_total->amount->value() * 100,  //convert SOM to Tiyin
+  );
+
+  // уникальный параметр
+  $form['account']['#tree'] = TRUE;
+  $form['account'][variable_get('param_id','')] = array(
+    '#type' => 'hidden',
+    '#value' => $order->order_id,
+  );
+  
+  $form['callback'] = array(
+    '#type' => 'hidden',
+    '#value' => url('cart', array('absolute' => TRUE)),
+  ); 
+
+  // адрес для редиректа после успешной оплаты
+  $form['redirect_uri'] = array(
+    '#type' => 'hidden',
+    '#value' => url('checkout/' . $order->order_id . '/payment/return/' . $order->data['payment_redirect_key'], array('absolute' => TRUE)),
+  );
+ 
+  // адрес для редиректа в случаем если оплата не состоялась
+  $form['error_uri'] = array(
+    '#type' => 'hidden',
+    '#value' => url('checkout/' . $order->order_id . '/payment/back/' . $order->data['payment_redirect_key'], array('absolute' => TRUE)),
+  );
+ 
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Оплатить'),
+  );
+ 
+  return $form;
+}
+
+/**
+ * Payment method callback: redirect form return validation.
+ */
+function uzcard_redirect_form_validate($order, $payment_method) {
+  
+}
+ 
+/**
+ * Payment method callback: redirect form submission.
+ */
+function uzcard_redirect_form_submit($order, $payment_method) {
+
+}

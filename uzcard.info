@@ -1,0 +1,3 @@
+core = "7.x"
+description = "UzCard"
+name = "UzCard payment method"
