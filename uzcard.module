@@ -15,8 +15,8 @@ function uzcard_menu(){
    );
 
    $items['admin/config/system/uzcard'] = array(
-    'title' => 'UzCard settings',
-    'description' => 'UzCard settings',
+    'title' => 'UzCard',
+    'description' => 'Commerce UzCard onsite payment method',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('uzcard_admin'),
     'access arguments' => array('access administration pages'),
