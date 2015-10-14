@@ -5,7 +5,6 @@ function _uzcard_pay(){
 	$data = file_get_contents('php://input');		
 	$data = json_decode($data);
 
-	// $PAYCOM_PASSWORD='vG#H?dDXNTfQSmE8@K@c?AHVm?vd67h%TdU&';
 	$PAYCOM_PASSWORD= variable_get('paycom_password','');	
 	
 	function parseRequestHeaders() {
@@ -336,40 +335,6 @@ function _uzcard_pay(){
 	            	);
 				return call_user_func_array($callback, array(null, $result, $request_id));				 
 		    }	    
-
-	        // если транзакции в базе нету
-	        // проверяем можно ли оплатить заказ   
-	    //     $this->CheckPerformTransaction($params, function($error, $result) {
-	    //         if( $error ) {
-					// // drupal_json_output(array('status'=>false));
-					// call_user_func_array('send_response', array($error, $result, $this->request_id));
-
-	    //         } 
-
-
-	    //         //создаем транзакцию и добовляем ее в базу
-	            
-	    //         $order_id = $this->params->account->mirandauniq;
-	    //         set_transaction_status($order_id, 1, $this->params->id);
-
-		   //      $transaction = load_transaction_by_property('remote_id', $this->params->id, 'remote_id');
-
-		   //      if($transaction){
-		            
-		   //          $result=array(
-		   //          	'state' => (int) $transaction->remote_status,
-		   //          	'create_time' => (int) $transaction->created,
-		   //          	'transaction' => (string) $transaction->transaction_id
-		   //          	);
-		   //          $callback='send_response';
-					// call_user_func_array($callback, array(null, $result, $this->request_id));	
-		   //      }
-		   //      else{
-		   //      	call_user_func_array('send_response', array(BilingErrors('transaction_not_found'), null, $this->request_id));	
-		   //      }
-
-
-	    //     }, $request_id);
 // =====================================================================
 		    
             $order_id = $this->params->account->mirandauniq;
